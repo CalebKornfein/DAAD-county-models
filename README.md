@@ -10,4 +10,4 @@ predict.xlsx -- contains the new counties to be predicted
 
 County Models.Rmd -- contains the documented code
 
-All tiff files are publication-ready images of some of the main graphs produced in the Rmd
+County Model Images -- contains copies of the images found in County Model Report in TIFF format
