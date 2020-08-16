@@ -1,0 +1,604 @@
+---
+title: "New NRW MLR Model"
+author: "Caleb Kornfein"
+date: "6/26/2020"
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+## Packages
+
+```{r packages, echo=FALSE}
+library(readxl)
+library(tidyverse)
+library(broom)
+library(caTools)
+library(car)
+library(mlr)
+library(ggplot2)
+library(dplyr)
+library(glmnet)
+library(caret)
+library(xgboost)
+library(magrittr)
+```
+
+### Loading Data 
+
+```{r loading, echo=FALSE}
+# reading in the training data
+county_data <- read_excel("train.xlsx")
+county_data = county_data[-c(45),]
+county_data = county_data[,colnames(county_data) != "Name"]
+
+# converting the data to matrix form
+train <- county_data %>% select("Einwohner_2014(interp.)", "BIP_14_Mill","Erwerbstätige _ 2014", "Arbeitnehmerentgelt", "Primäreinkommen_private", "A", "B", "L", "K", "Area", "Urban_Area") %>% data.matrix()
+
+# preparing the training data for each class of vehicle
+PKW_data <- county_data %>% select("Einwohner_2014(interp.)", "BIP_14_Mill","Erwerbstätige _ 2014", "Arbeitnehmerentgelt", "Primäreinkommen_private", "A", "B", "L", "K", "Area", "Urban_Area", "PKW") %>% data.matrix()
+LNFZ_data <- county_data %>% select("Einwohner_2014(interp.)", "BIP_14_Mill","Erwerbstätige _ 2014", "Arbeitnehmerentgelt", "Primäreinkommen_private", "A", "B", "L", "K", "Area", "Urban_Area", "LNFZ") %>% data.matrix()
+SNFZ_data <- county_data %>% select("Einwohner_2014(interp.)", "BIP_14_Mill","Erwerbstätige _ 2014", "Arbeitnehmerentgelt", "Primäreinkommen_private", "A", "B", "L", "K", "Area", "Urban_Area", "SNFZ") %>% data.matrix()
+KRAD_data <- county_data %>% select("Einwohner_2014(interp.)", "BIP_14_Mill","Erwerbstätige _ 2014", "Arbeitnehmerentgelt", "Primäreinkommen_private", "A", "B", "L", "K", "Area", "Urban_Area", "KRAD") %>% data.matrix()
+```
+
+## Ridge Regression Implementation
+
+# PKW
+
+```{r PKW_Ridge, echo=FALSE}
+set.seed(1)
+
+# building ridge model
+PKW <- county_data$PKW
+lambdas <- 10^seq(10, -5, length.out = 200)
+
+PKW_fit <- glmnet(train, PKW, standardize = TRUE, alpha = 0, lambda = lambdas)
+PKW_cv_fit <- cv.glmnet(train, PKW, standardize = TRUE, alpha = 0, lambda = lambdas)
+PKW_opt_lambda <- PKW_cv_fit$lambda.min
+
+# to find RMSE at optimal lambda
+PKW_cv_RMSE <- sqrt(PKW_cv_fit$cvm[PKW_cv_fit$cvm == min(PKW_cv_fit$cvm)])
+
+# plotting
+plot(PKW_fit,xvar="lambda", label=TRUE)
+plot(PKW_cv_fit)
+coef(PKW_fit, s = PKW_opt_lambda)
+
+# prediction
+PKW_train_prediction <- predict(PKW_fit, train, s = PKW_opt_lambda) %>% as.matrix()
+
+# Sum of Squares Total and Error
+PKW_sst <- sum((PKW - mean(PKW))^2)
+PKW_sse <- sum((PKW_train_prediction - PKW)^2)
+
+# R squared
+PKW_rsq <- 1 - PKW_sse / PKW_sst
+
+print("R2 for model on training data is:", quote = FALSE)
+PKW_rsq
+print("MLR model R2:")
+0.9447
+```
+
+# SNFZ
+
+```{r SNFZ_Ridge, echo=FALSE}
+set.seed(1)
+
+# building ridge model
+SNFZ <- county_data$SNFZ
+lambdas <- 10^seq(10, -5, length.out = 200)
+
+SNFZ_fit <- glmnet(train, SNFZ, alpha = 0, lambda = lambdas)
+SNFZ_cv_fit <- cv.glmnet(train, SNFZ, alpha = 0, lambda = lambdas)
+SNFZ_opt_lambda <- SNFZ_cv_fit$lambda.min
+
+# to find RMSE at optimal lambda
+SNFZ_cv_RMSE <- sqrt(SNFZ_cv_fit$cvm[SNFZ_cv_fit$cvm == min(SNFZ_cv_fit$cvm)])
+
+# plotting
+plot(SNFZ_fit,xvar="lambda",label=TRUE)
+plot(SNFZ_cv_fit)
+coef(SNFZ_fit, s = SNFZ_opt_lambda)
+
+# prediction
+SNFZ_train_prediction <- predict(SNFZ_fit, train, s = SNFZ_opt_lambda) %>% as.matrix()
+
+# Sum of Squares Total and Error
+SNFZ_sst <- sum((SNFZ - mean(SNFZ))^2)
+SNFZ_sse <- sum((SNFZ_train_prediction - SNFZ)^2)
+
+# R squared
+SNFZ_rsq <- 1 - SNFZ_sse / SNFZ_sst
+
+print("R2 for model on training data is:", quote = FALSE)
+SNFZ_rsq
+print("MLR model R2:")
+0.7429
+```
+
+# LNFZ
+
+```{r LNFZ_Ridge, echo=FALSE}
+set.seed(1)
+
+# building ridge model
+LNFZ <- county_data$LNFZ
+lambdas <- 10^seq(10, -5, length.out = 200)
+
+LNFZ_fit <- glmnet(train, LNFZ, alpha = 0, lambda = lambdas)
+LNFZ_cv_fit <- cv.glmnet(train, LNFZ, alpha = 0, lambda = lambdas)
+LNFZ_opt_lambda <- LNFZ_cv_fit$lambda.min
+
+# to find RMSE at optimal lambda
+LNFZ_cv_RMSE <- sqrt(LNFZ_cv_fit$cvm[LNFZ_cv_fit$cvm == min(LNFZ_cv_fit$cvm)])
+
+# plotting
+plot(LNFZ_fit,xvar="lambda",label=TRUE)
+plot(LNFZ_cv_fit)
+coef(LNFZ_fit, s = LNFZ_opt_lambda)
+
+# prediction
+LNFZ_train_prediction <- predict(LNFZ_fit, train, s = SNFZ_opt_lambda) %>% as.matrix()
+
+# Sum of Squares Total and Error
+LNFZ_sst <- sum((LNFZ - mean(LNFZ))^2)
+LNFZ_sse <- sum((LNFZ_train_prediction - LNFZ)^2)
+
+# R squared
+LNFZ_rsq <- 1 - LNFZ_sse / LNFZ_sst
+
+print("R2 for LNFZ Ridge model on training data is:", quote = FALSE)
+LNFZ_rsq
+print("MLR model R2:")
+0.8578
+```
+
+## KRAD
+
+```{r KRAD_Ridge, echo=FALSE}
+set.seed(1)
+
+# building ridge model
+KRAD <- county_data$KRAD
+lambdas <- 10^seq(10, -5, length.out = 200)
+
+KRAD_fit <- glmnet(train, KRAD, alpha = 0, lambda = lambdas)
+KRAD_cv_fit <- cv.glmnet(train, KRAD, alpha = 0, lambda = lambdas)
+KRAD_opt_lambda <- KRAD_cv_fit$lambda.min
+
+# to find RMSE at optimal lambda
+KRAD_cv_RMSE <- sqrt(KRAD_cv_fit$cvm[KRAD_cv_fit$cvm == min(KRAD_cv_fit$cvm)])
+
+# plotting
+plot(KRAD_fit,xvar="lambda",label=TRUE)
+plot(KRAD_cv_fit)
+coef(KRAD_fit, s = KRAD_opt_lambda)
+
+# prediction
+KRAD_train_prediction <- predict(KRAD_fit, train, s = KRAD_opt_lambda) %>% as.matrix()
+
+# Sum of Squares Total and Error
+KRAD_sst <- sum((KRAD - mean(KRAD))^2)
+KRAD_sse <- sum((KRAD_train_prediction - KRAD)^2)
+
+# R squared
+KRAD_rsq <- 1 - KRAD_sse / KRAD_sst
+
+print("R2 for model on training data is:", quote = FALSE)
+KRAD_rsq
+print("MLR model R2:")
+0.8617
+```
+
+# Plot of lambda tuning
+
+```{r lambda-plot, echo = FALSE}
+par(mfrow=c(2,2))
+plot(PKW_cv_fit)
+legend("topleft", legend = "PC")
+plot(SNFZ_cv_fit)
+legend("topleft", legend = "HDV")
+plot(LNFZ_cv_fit)
+legend("topleft", legend = "LDV")
+plot(KRAD_cv_fit)
+legend("topleft", legend = "MC")
+quartz.save("lambda_tuning.tiff", type = "tiff")
+dev.off()
+```
+
+### Prediction
+
+## Ridge Prediction
+
+```{r predict-loading, echo = FALSE}
+# loading prediction data
+county_predict_data <- read_excel("predict.xlsx")
+
+# preparing objects
+predict_counties <- county_predict_data %>% select("Einwohner_2014(interp.)", "BIP_14_Mill","Erwerbstätige _ 2014", "Arbeitnehmerentgelt", "Primäreinkommen_private", "A", "B", "L", "K", "Area", "Urban_Area") %>% data.matrix()
+predict_sample_data <- county_data %>% select("Einwohner_2014(interp.)", "BIP_14_Mill","Erwerbstätige _ 2014", "Arbeitnehmerentgelt", "Primäreinkommen_private", "A", "B", "L", "K", "Area", "Urban_Area") %>% data.matrix()
+
+# In sample prediction for Ridge
+PKW_ridge_sample_prediction <- predict(PKW_fit, train, s = PKW_opt_lambda)
+SNFZ_ridge_sample_prediction <- predict(SNFZ_fit, train, s = SNFZ_opt_lambda) 
+LNFZ_ridge_sample_prediction <- predict(LNFZ_fit, train, s = SNFZ_opt_lambda) 
+KRAD_ridge_sample_prediction <- predict(KRAD_fit, train, s = KRAD_opt_lambda)
+
+# Out of sample prediction for Ridge
+PKW_counties_prediction <- predict(PKW_fit, predict_counties, s = PKW_opt_lambda) 
+SNFZ_counties_prediction <- predict(SNFZ_fit, predict_counties, s = SNFZ_opt_lambda)
+LNFZ_counties_prediction <- predict(LNFZ_fit, predict_counties, s = SNFZ_opt_lambda)
+KRAD_counties_prediction <- predict(KRAD_fit, predict_counties, s = KRAD_opt_lambda)
+```
+
+## Original MLR Models and Prediction
+
+```{r original-mlr, echo = FALSE}
+# prediction data sets
+predict_counties <- county_predict_data %>% select("Einwohner_2014(interp.)", "BIP_14_Mill","Erwerbstätige _ 2014", "Arbeitnehmerentgelt", "Primäreinkommen_private", "A", "B", "L", "K", "Area", "Urban_Area")
+predict_sample_data <- county_data %>% select("Einwohner_2014(interp.)", "BIP_14_Mill","Erwerbstätige _ 2014", "Arbeitnehmerentgelt", "Primäreinkommen_private", "A", "B", "L", "K", "Area", "Urban_Area")
+
+# data sets for building each MLR model
+PKW_data <- county_data %>% select("PKW", "Einwohner_2014(interp.)", "BIP_14_Mill","Erwerbstätige _ 2014", "Arbeitnehmerentgelt", "Primäreinkommen_private", "A", "B", "L", "K", "Area", "Urban_Area")
+SNFZ_data <- county_data %>% select("SNFZ", "Einwohner_2014(interp.)", "BIP_14_Mill","Erwerbstätige _ 2014", "Arbeitnehmerentgelt", "Primäreinkommen_private", "A", "B", "L", "K", "Area", "Urban_Area")
+LNFZ_data <- county_data %>% select("LNFZ", "Einwohner_2014(interp.)", "BIP_14_Mill","Erwerbstätige _ 2014", "Arbeitnehmerentgelt", "Primäreinkommen_private", "A", "B", "L", "K", "Area", "Urban_Area")
+KRAD_data <- county_data %>% select("KRAD", "Einwohner_2014(interp.)", "BIP_14_Mill","Erwerbstätige _ 2014", "Arbeitnehmerentgelt", "Primäreinkommen_private", "A", "B", "L", "K", "Area", "Urban_Area")
+
+# MLR models
+PKW_model <- lm(PKW ~ ., data=PKW_data)
+SNFZ_model <- lm(SNFZ ~ ., data=SNFZ_data)
+LNFZ_model <- lm(LNFZ ~ ., data=LNFZ_data)
+KRAD_model <- lm(KRAD ~ ., data=KRAD_data)
+
+# Original MLR in sample prediction
+PKW_original_sample_prediction <- predict(PKW_model, predict_sample_data)
+SNFZ_original_sample_prediction <- predict(SNFZ_model, predict_sample_data)
+LNFZ_original_sample_prediction <- predict(LNFZ_model, predict_sample_data)
+KRAD_original_sample_prediction <- predict(KRAD_model, predict_sample_data)
+
+# Original MLR out of sample prediction
+PKW_original_counties_prediction <- predict(PKW_model, predict_counties)
+SNFZ_original_counties_prediction <- predict(SNFZ_model, predict_counties)
+LNFZ_original_counties_prediction <- predict(LNFZ_model, predict_counties)
+KRAD_original_counties_prediction <- predict(KRAD_model, predict_counties)
+```
+
+# original with cross-validation, 10 folds
+
+```{r cross-val, echo = FALSE}
+# creating training method
+train.control <- trainControl(method = "repeatedcv", number = 10, savePredictions = TRUE)
+
+# cross-validation
+set.seed(1)
+PKW_cv_model <- train(PKW ~., data = PKW_data, method = "lm",
+               trControl = train.control)
+set.seed(1)
+SNFZ_cv_model <- train(SNFZ ~., data = SNFZ_data, method = "lm",
+               trControl = train.control)
+set.seed(1)
+LNFZ_cv_model <- train(LNFZ ~., data = LNFZ_data, method = "lm",
+               trControl = train.control)
+set.seed(1)
+KRAD_cv_model <- train(KRAD ~., data = KRAD_data, method = "lm",
+               trControl = train.control)
+# PKW + R-squared sd
+PKW_cv_model
+sd(PKW_cv_model$resample$Rsquared)
+# SNFZ + R-squared sd
+SNFZ_cv_model
+sd(SNFZ_cv_model$resample$Rsquared)
+# LNFZ + R-squared sd
+LNFZ_cv_model
+sd(LNFZ_cv_model$resample$Rsquared)
+# KRAD + R-squared sd
+KRAD_cv_model
+sd(KRAD_cv_model$resample$Rsquared)
+```
+
+## In sample prediction comparison
+
+```{r in-sample-prediction, echo = FALSE}
+# sorting points to be plotted
+PKW_in_sample_predictions <- data.frame(PKW, PKW_original_sample_prediction, PKW_ridge_sample_prediction)
+colnames(PKW_in_sample_predictions) <- c("Literature", "MLR", "Ridge")
+PKW_in_sample_predictions <- PKW_in_sample_predictions[order(PKW_in_sample_predictions$Literature),]
+
+SNFZ_in_sample_predictions <- data.frame(SNFZ, SNFZ_original_sample_prediction, SNFZ_ridge_sample_prediction)
+colnames(SNFZ_in_sample_predictions) <- c("Literature", "MLR", "Ridge")
+SNFZ_in_sample_predictions <- SNFZ_in_sample_predictions[order(SNFZ_in_sample_predictions$Literature),]
+
+LNFZ_in_sample_predictions <- data.frame(LNFZ, LNFZ_original_sample_prediction, LNFZ_ridge_sample_prediction)
+colnames(LNFZ_in_sample_predictions) <- c("Literature", "MLR", "Ridge")
+LNFZ_in_sample_predictions <- LNFZ_in_sample_predictions[order(LNFZ_in_sample_predictions$Literature),]
+
+KRAD_in_sample_predictions <- data.frame(KRAD, KRAD_original_sample_prediction, KRAD_ridge_sample_prediction)
+colnames(KRAD_in_sample_predictions) <- c("Literature", "MLR", "Ridge")
+KRAD_in_sample_predictions <- KRAD_in_sample_predictions[order(KRAD_in_sample_predictions$Literature),]
+```
+
+# PKW in sample
+
+```{r in-sample-prediction, echo = FALSE}
+plot(PKW_in_sample_predictions$Literature, col="black", xlab = "Observation Rank, by Literature Value", ylab = "Predicted Road Mileages in Km/a", main="PC In Sample Prediction", pch = 18)
+points(PKW_in_sample_predictions$MLR, col="red", pch = 20) 
+points(PKW_in_sample_predictions$Ridge, col="blue", pch = 20)
+legend("topleft", legend= c("Literature", "MLR", "Ridge"), col=c("black", "red", "blue"), lty=1:2)
+quartz.save("PKW_in_sample.tiff", type = "tiff")
+dev.off()
+```
+
+# SNFZ in sample
+
+```{r in-sample-prediction, echo = FALSE}
+plot(SNFZ_in_sample_predictions$Literature, col="black", xlab = "Observation Rank, by Literature Value", ylab = "Predicted Road Mileages in Km/a", main="HDV In Sample Prediction", pch = 18)
+points(SNFZ_in_sample_predictions$MLR, col="red", pch = 20) 
+points(SNFZ_in_sample_predictions$Ridge, col="blue", pch = 20)
+legend("topleft", legend= c("Literature", "MLR", "Ridge"), col=c("black", "red", "blue"), lty=1:2)
+quartz.save("SNFZ_in_sample.tiff", type = "tiff")
+dev.off()
+```
+
+# LNFZ in sample
+
+```{r in-sample-prediction, echo = FALSE}
+plot(LNFZ_in_sample_predictions$Literature, col="black", xlab = "Observation Rank, by Literature Value", ylab = "Predicted Road Mileages in Km/a", main="LDV In Sample Prediction", pch = 18)
+points(LNFZ_in_sample_predictions$MLR, col="red", pch = 20) 
+points(LNFZ_in_sample_predictions$Ridge, col="blue", pch = 20)
+legend("topleft", legend= c("Literature", "MLR", "Ridge"), col=c("black", "red", "blue"), lty=1:2)
+quartz.save("LNFZ_in_sample.tiff", type = "tiff")
+dev.off()
+```
+
+# KRAD in sample
+
+```{r in-sample-prediction, echo = FALSE}
+plot(KRAD_in_sample_predictions$Literature, col="black", xlab = "Observation Rank, by Literature Value", ylab = "Predicted Road Mileages in Km/a", main="MC In Sample Prediction", pch = 18)
+points(KRAD_in_sample_predictions$MLR, col="red", pch = 20) 
+points(KRAD_in_sample_predictions$Ridge, col="blue", pch = 20)
+legend("topleft", legend= c("Literature", "MLR", "Ridge"), col=c("black", "red", "blue"), lty=1:2)
+quartz.save("KRAD_in_sample.tiff", type = "tiff")
+dev.off()
+```
+
+## RMSE for in sample prediction
+
+```{r mse-calculations, echo=FALSE}
+# Calculating RMSE for MLR models
+PKW_mlr_rmse <- sqrt(mean((PKW_original_sample_prediction-PKW)^2))
+SNFZ_mlr_rmse <- sqrt(mean((SNFZ_original_sample_prediction-SNFZ)^2))
+LNFZ_mlr_rmse <- sqrt(mean((LNFZ_original_sample_prediction-LNFZ)^2))
+KRAD_mlr_rmse <- sqrt(mean((KRAD_original_sample_prediction-KRAD)^2))
+
+# Calculating RMSE for Ridge models
+PKW_ridge_rmse <- sqrt(mean((predict(PKW_fit, train, s = PKW_opt_lambda) %>% as.matrix() - PKW)^2))
+SNFZ_ridge_rmse <- sqrt(mean((predict(SNFZ_fit, train, s = SNFZ_opt_lambda) %>% as.matrix() - SNFZ)^2))
+LNFZ_ridge_rmse <- sqrt(mean((predict(LNFZ_fit, train, s = LNFZ_opt_lambda) %>% as.matrix() - LNFZ)^2))
+KRAD_ridge_rmse <- sqrt(mean((predict(KRAD_fit, train, s = KRAD_opt_lambda) %>% as.matrix() - KRAD)^2))
+
+# Double checking RMSE calculations (using ridge model, set lambda to 0)
+PKW_mlr_rmse_0 <- sqrt(mean((predict(PKW_fit, train, s = 0) %>% as.matrix() - PKW)^2))
+SNFZ_mlr_rmse_0 <- sqrt(mean((predict(SNFZ_fit, train, s = 0) %>% as.matrix() - SNFZ)^2))
+LNFZ_mlr_rmse_0 <- sqrt(mean((predict(LNFZ_fit, train, s = 0) %>% as.matrix() - LNFZ)^2))
+KRAD_mlr_rmse_0 <- sqrt(mean((predict(KRAD_fit, train, s = 0) %>% - KRAD)^2))
+
+# RMSE to mean ratios
+
+PKW_rmse_ratio <- PKW_mlr_rmse/mean(PKW)
+SNFZ_rmse_ratio <- SNFZ_mlr_rmse/mean(SNFZ)
+LNFZ_rmse_ratio <- LNFZ_mlr_rmse/mean(LNFZ)
+KRAD_rmse_ratio <- KRAD_mlr_rmse/mean(KRAD)
+
+print("RMSE for PKW Ridge model on training data is:", quote = FALSE)
+PKW_ridge_rmse
+print("RMSE for PKW MLR model on training data is:", quote = FALSE)
+PKW_mlr_rmse
+
+print("RMSE for SNFZ Ridge model on training data is:", quote = FALSE)
+SNFZ_ridge_rmse
+print("RMSE for SNFZ MLR model on training data is:", quote = FALSE)
+SNFZ_mlr_rmse
+
+print("RMSE for LNFZ Ridge model on training data is:", quote = FALSE)
+LNFZ_ridge_rmse
+print("RMSE for LNFZ MLR model on training data is:", quote = FALSE)
+LNFZ_mlr_rmse
+
+print("RMSE for KRAD Ridge model on training data is:", quote = FALSE)
+KRAD_ridge_rmse
+print("RMSE for KRAD MLR model on training data is:", quote = FALSE)
+KRAD_mlr_rmse
+```
+
+## Out of sample prediction comparison
+
+```{r out-of-sample-prediction, echo = FALSE}
+# sorting points for comparisons
+PKW_out_of_sample_predictions <- data.frame(PKW_original_counties_prediction, PKW_counties_prediction)
+colnames(PKW_out_of_sample_predictions) <- c("MLR", "Ridge")
+PKW_out_of_sample_predictions <- PKW_out_of_sample_predictions[order(PKW_out_of_sample_predictions$MLR),]
+
+SNFZ_out_of_sample_predictions <- data.frame(SNFZ_original_counties_prediction, SNFZ_counties_prediction)
+colnames(SNFZ_out_of_sample_predictions) <- c("MLR", "Ridge")
+SNFZ_out_of_sample_predictions <- SNFZ_out_of_sample_predictions[order(SNFZ_out_of_sample_predictions$MLR),]
+
+LNFZ_out_of_sample_predictions <- data.frame(LNFZ_original_counties_prediction, LNFZ_counties_prediction)
+colnames(LNFZ_out_of_sample_predictions) <- c("MLR", "Ridge")
+LNFZ_out_of_sample_predictions <- LNFZ_out_of_sample_predictions[order(LNFZ_out_of_sample_predictions$MLR),]
+
+KRAD_out_of_sample_predictions <- data.frame(KRAD_original_counties_prediction, KRAD_counties_prediction)
+colnames(KRAD_out_of_sample_predictions) <- c("MLR", "Ridge")
+KRAD_out_of_sample_predictions <- KRAD_out_of_sample_predictions[order(KRAD_out_of_sample_predictions$MLR),]
+```
+
+# PKW out of sample
+
+```{r out-of-sample-prediction, echo = FALSE}
+plot(PKW_out_of_sample_predictions$Ridge, col="blue", xlab = "Observation Number, Sorted by MLR Model Prediction (Ascending)", ylab = "Predicted Road Mileages in Km/a", main="PC Out of Sample Prediction", pch = 20)
+points(PKW_out_of_sample_predictions$MLR, col="red", pch = 20) 
+legend("topleft", legend= c("Ridge", "MLR"), col=c("blue", "red"), lty=1:2)
+quartz.save("PKW_out_of_sample.tiff", type = "tiff")
+dev.off()
+```
+
+# SNFZ out of sample
+
+```{r out-of-sample-prediction, echo = FALSE}
+plot(SNFZ_out_of_sample_predictions$Ridge, col="blue", xlab = "Observation Number, Sorted by MLR Model Prediction (Ascending)", ylab = "Predicted Road Mileages in Km/a", main="HDV Out of Sample Prediction", pch = 20)
+points(SNFZ_out_of_sample_predictions$MLR, col="red", pch = 20) 
+legend("topleft", legend= c("Ridge", "MLR"), col=c("blue", "red"), lty=1:2)
+quartz.save("SNFZ_out_of_sample.tiff", type = "tiff")
+dev.off()
+```
+
+# LNFZ out of sample
+
+```{r out-of-sample-prediction, echo = FALSE}
+plot(LNFZ_out_of_sample_predictions$Ridge, col="blue", xlab = "Observation Number, Sorted by MLR Model Prediction (Ascending)", ylab = "Predicted Road Mileages in Km/a", main="LDV Out of Sample Prediction", pch = 20)
+points(LNFZ_out_of_sample_predictions$MLR, col="red", pch = 20) 
+legend("topleft", legend= c("Ridge", "MLR"), col=c("blue", "red"), lty=1:2)
+quartz.save("LNFZ_out_of_sample.tiff", type = "tiff")
+dev.off()
+```
+
+# Krad out of sample
+
+```{r out-of-sample-prediction, echo = FALSE}
+plot(KRAD_out_of_sample_predictions$Ridge, col="blue", xlab = "Observation Number, Sorted by MLR Model Prediction (Ascending)", ylab = "Predicted Road Mileages in Km/a", main="MC Out of Sample Prediction", pch = 20)
+points(KRAD_out_of_sample_predictions$MLR, col="red", pch = 20) 
+legend("topleft", legend= c("Ridge", "MLR"), col=c("blue", "red"), lty=1:2)
+quartz.save("KRAD_out_of_sample.tiff", type = "tiff")
+dev.off()
+```
+
+## Ratio comparisons
+
+```{r comparisons, echo = FALSE}
+PKW_ratio <- 1/(sum(PKW_original_counties_prediction)/sum(PKW_counties_prediction))
+sprintf("Overall, the predicted response with PKW Ridge Model is a multiplicative factor of around %g times higher than the original PKW MLR Model's prediction", PKW_ratio)
+cat("\n")
+
+SNFZ_ratio <- 1/(sum(SNFZ_original_counties_prediction)/sum(SNFZ_counties_prediction))
+sprintf("Overall, the predicted response with SNFZ Ridge Model is a multiplicative factor of around %g times lower than the original SNFZ MLR Model's prediction", SNFZ_ratio)
+cat("\n")
+
+LNFZ_ratio <- 1/(sum(LNFZ_original_counties_prediction)/sum(LNFZ_counties_prediction))
+sprintf("Overall, the predicted response with LNFZ Ridge Model is a multiplicative factor of around %g times lower than the original LNFZ MLR Model's prediction", LNFZ_ratio)
+cat("\n")
+
+KRAD_ratio <- 1/(sum(KRAD_original_counties_prediction)/sum(KRAD_counties_prediction))
+sprintf("Overall, the predicted response with KRAD Ridge Model is a multiplicative factor of around %g times higher than the original KRAD MLR Model's prediction", KRAD_ratio)
+cat("\n")
+```
+
+## Model tuning analysis:
+
+# Error analysis
+```{r error-analysis, echo = FALSE}
+print("For PKW Models:")
+cat("\n")
+sprintf("R2 for original on training data is: %g", 0.9447)
+sprintf("Average R2 for cross-validated folds is: %g", PKW_cv_model$results$Rsquared)
+sprintf("Standard deviation for average R2 for cross-validated folds is: %g", PKW_cv_model$results$RsquaredSD)
+sprintf("R2 for Ridge model is: %g", PKW_rsq)
+cat("\n")
+
+print("For SNFZ Models:")
+cat("\n")
+sprintf("R2 for original on training data is: %g", 0.7429)
+sprintf("Average R2 for cross-validated folds is: %g", SNFZ_cv_model$results$Rsquared)
+sprintf("Standard deviation for average R2 for cross-validated folds is: %g", SNFZ_cv_model$results$RsquaredSD)
+sprintf("R2 for Ridge model is: %g", SNFZ_rsq)
+cat("\n")
+
+print("For LNFZ Models:")
+cat("\n")
+sprintf("R2 for original on training data is: %g", 0.8578)
+sprintf("Average R2 for cross-validated folds is: %g", LNFZ_cv_model$results$Rsquared)
+sprintf("Standard deviation for average R2 for cross-validated folds is: %g", LNFZ_cv_model$results$RsquaredSD)
+sprintf("R2 for Ridge model is: %g", LNFZ_rsq)
+cat("\n")
+
+print("For KRAD Models:")
+cat("\n")
+sprintf("R2 for original on training data is: %g", 0.8617)
+sprintf("Average R2 for cross-validated folds is: %g", KRAD_cv_model$results$Rsquared)
+sprintf("Standard deviation for average R2 for cross-validated folds is: %g", KRAD_cv_model$results$RsquaredSD)
+sprintf("R2 for Ridge model is: %g", KRAD_rsq)
+cat("\n")
+```
+
+# Coefficient Comparison
+
+```{r coeff-comp, echo=FALSE}
+# Ridge coefficients
+PKW_ridge_coef <- coef(PKW_fit, s = PKW_opt_lambda)
+SNFZ_ridge_coef <- coef(SNFZ_fit, s = SNFZ_opt_lambda)
+LNFZ_ridge_coef <- coef(LNFZ_fit, s = LNFZ_opt_lambda)
+KRAD_ridge_coef <- coef(KRAD_fit, s = KRAD_opt_lambda)
+
+# MLR coefficients
+PKW_mlr_coef <- coef(PKW_model)
+SNFZ_mlr_coef <- coef(SNFZ_model)
+LNFZ_mlr_coef <- coef(LNFZ_model)
+KRAD_mlr_coef <- coef(KRAD_model)
+
+PKW_coef <- data.frame(PKW_mlr_coef, as.matrix(PKW_ridge_coef))
+colnames(PKW_coef) = c("PKW MLR", "PKW Ridge")
+PKW_coef
+
+SNFZ_coef <- data.frame(SNFZ_mlr_coef, as.matrix(SNFZ_ridge_coef))
+colnames(SNFZ_coef) = c("SNFZ MLR", "SNFZ Ridge")
+SNFZ_coef
+
+LNFZ_coef <- data.frame(LNFZ_mlr_coef, as.matrix(LNFZ_ridge_coef))
+colnames(LNFZ_coef) = c("LNFZ MLR", "LNFZ Ridge")
+LNFZ_coef
+
+KRAD_coef <- data.frame(KRAD_mlr_coef, as.matrix(KRAD_ridge_coef))
+colnames(KRAD_coef) = c("KRAD MLR", "KRAD Ridge")
+KRAD_coef
+```
+
+### MLR Assumptions for original model
+
+```{r eda-response}
+# eda histograms of respons
+par(mfrow=c(2,2))
+hist(county_data$PKW, xlab = "PKW Road Mileages (Vehicle km/yr)", main = "Histogram of PKW Road Mileages", col = "salmon")
+hist(county_data$SNFZ, xlab = "SNFZ Road Mileages (Vehicle km/yr)", main = "Histogram of SNFZ Road Mileages", col = "salmon")
+hist(county_data$LNFZ, xlab = "LNFZ Road Mileages (Vehicle km/yr)", main = "Histogram of LNFZ Road Mileages", col = "salmon")
+hist(county_data$KRAD, xlab = "KRAD Road Mileages (Vehicle km/yr)", main = "Histogram of KRAD Road Mileages", col = "salmon")
+
+# eda histograms of log(response)
+par(mfrow=c(2,2))
+hist(log(county_data$PKW), xlab = "Log PKW Road Mileages (Vehicle km/yr)", main = "Histogram of Log PKW Road Mileages", col = "steelblue2")
+hist(log(county_data$SNFZ), xlab = "Log SNFZ Road Mileages (Vehicle km/yr)", main = "Histogram of Log SNFZ Road Mileages", col = "steelblue2")
+hist(log(county_data$LNFZ), xlab = " LogLNFZ Road Mileages (Vehicle km/yr)", main = "Histogram of Log LNFZ Road Mileages", col = "steelblue2")
+hist(log(county_data$KRAD), xlab = "Log KRAD Road Mileages (Vehicle km/yr)", main = "Histogram of Log KRAD Road Mileages", col = "steelblue2")
+```
+
+To check the normality of the residuals as well as homoscedasticity (residual variance doesn't change as a function of the response value)
+
+```{r assumptions}
+# residuals histogram
+par(mfrow=c(2,2))
+hist(resid(PKW_model), col = "steelblue", xlab = "Residual Value", main = "Histogram of PC Residuals")
+hist(resid(SNFZ_model), col = "steelblue", xlab = "Residual Value",  main = "Histogram of HDV Residuals")
+hist(resid(LNFZ_model), col = "steelblue", xlab = "Residual Value",  main = "Histogram of LDV Residuals")
+hist(resid(KRAD_model), col = "steelblue", xlab = "Residual Value",  main = "Histogram of MC Residuals")
+quartz.save(file = "residuals_histogram.tiff", type = "tiff")
+dev.off()
+
+# residuals vs literature values
+par(mfrow = c(2,2))
+plot(y=resid(PKW_model), x = county_data$PKW, col = "steelblue", ylab = "Residual Value", xlab = "Literature PC Road Mileages (Vehicle km/a)")
+plot(y=resid(SNFZ_model), x = county_data$SNFZ, col = "steelblue", ylab = "Residual Value", xlab = "Literature HDV Road Mileages (Vehicle km/a)")
+plot(y=resid(LNFZ_model), x = county_data$LNFZ, col = "steelblue", ylab = "Residual Value", xlab = "Literature LDV Road Mileages (Vehicle km/a)")
+plot(y=resid(KRAD_model), x = county_data$KRAD, col = "steelblue", ylab = "Residual Value", xlab = "Literature MC Road Mileages (Vehicle km/a)")
+quartz.save(file = "residuals_vs_literature.tiff", type = "tiff")
+dev.off()
+```

@@ -1,0 +1,5 @@
+"0","# Cross-Validation with 4 iterations and 3/4 training data"
+"0","#cv_description = makeResampleDesc(""CV"", predict = ""train"", iters = 4)"
+"0","#PKW_crossval = resample(""regr.lm"", PKW_data, cv_description)"
+"0","#"
+"0",""

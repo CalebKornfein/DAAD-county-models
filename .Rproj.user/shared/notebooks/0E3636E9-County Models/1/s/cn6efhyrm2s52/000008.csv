@@ -1,0 +1,1 @@
+"0","plot(KRAD_out_of_sample_predictions$Ridge, col=""blue"", xlab = ""Observation Number, Sorted by MLR Model Prediction (Ascending)"", ylab = ""Predicted Road Mileages in Km/a"", main=""MC Out of Sample Prediction"", pch = 20)"

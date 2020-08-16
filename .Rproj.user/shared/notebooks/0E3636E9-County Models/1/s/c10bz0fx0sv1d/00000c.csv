@@ -1,0 +1,1 @@
+"0","plot(y=resid(PKW_model), x = county_data$PKW, col = ""steelblue"", ylab = ""Residual Value"", xlab = ""PKW Road Mileages (Vehicle km/yr)"")"

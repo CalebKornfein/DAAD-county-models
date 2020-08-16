@@ -1,0 +1,2 @@
+"0","SNFZ_residuals <- resid(SNFZ_model) # Save the residual values"
+"0","qqnorm(SNFZ_residuals)"

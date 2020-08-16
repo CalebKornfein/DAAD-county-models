@@ -1,0 +1,4 @@
+"0",""
+"0","# QQ Norm Plot of Residuals"
+"0","PKW_residuals <- resid(PKW_model)"
+"0","qqnorm(PKW_residuals)"

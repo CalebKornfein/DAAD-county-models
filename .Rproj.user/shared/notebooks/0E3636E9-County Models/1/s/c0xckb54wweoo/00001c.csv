@@ -1,0 +1,3 @@
+"0",""
+"0","# eda histograms of log(response)"
+"0","par(mfrow=c(2,2))"

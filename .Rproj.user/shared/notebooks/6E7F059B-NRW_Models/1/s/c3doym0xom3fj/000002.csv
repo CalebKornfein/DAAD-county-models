@@ -1,0 +1,8 @@
+"0","library(readxl)"
+"0","library(tidyverse)"
+"0","library(knitr)"
+"0","library(broom)"
+"0","library(caTools)"
+"0","library(car)"
+"0","library(mlr)"
+"0","options(knitr.table.format = ""latex"")"

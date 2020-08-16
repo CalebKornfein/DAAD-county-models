@@ -1,0 +1,1 @@
+"0","hist(county_data$KRAD, xlab = ""KRAD Road Mileages (Vehicle km/yr)"", main = ""Histogram of KRAD Road Mileages"", col = ""salmon"")"

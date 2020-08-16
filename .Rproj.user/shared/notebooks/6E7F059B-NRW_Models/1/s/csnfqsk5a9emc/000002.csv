@@ -1,0 +1,2 @@
+"0","PKW_75_model <- lm(PKW ~ ., data=PKW_75_train)"
+"0","tidy(PKW_75_model)"

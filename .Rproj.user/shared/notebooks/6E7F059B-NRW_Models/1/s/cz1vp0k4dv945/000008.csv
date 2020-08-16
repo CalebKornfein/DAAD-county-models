@@ -1,0 +1,2 @@
+"0","KRAD_residuals <- resid(KRAD_model) # Save the residual values"
+"0","qqnorm(KRAD_residuals)"

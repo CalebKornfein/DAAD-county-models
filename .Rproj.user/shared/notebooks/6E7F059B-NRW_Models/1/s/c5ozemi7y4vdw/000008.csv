@@ -1,0 +1,4 @@
+"0","# MLR Model"
+"0","PKW_data <- county_data[ , !names(county_data) %in% c(""LNFZ"", ""SNFZ"", ""KRAD"")]"
+"0","PKW_model <- lm(PKW ~ ., data=PKW_data)"
+"0","tidy(PKW_model)"

@@ -1,0 +1,6 @@
+"0","county_data <- read_excel(""MLR_County_Data.xlsx"")"
+"0",""
+"0","# filtering for only important variables"
+"0",""
+"0","variables <- c(""PKW"", ""LNFZ"", ""SNFZ"", ""KRAD"", ""Einwohner2014(interpoliert)"", ""BIP2014 n Mill. EUR"", ""Erwerbstätige (Inland) 2014 in 1000 Personen"", ""Arbeitnehmerentgelt (Inland) Mill. EUR"", ""Primäreinkommen der privaten Haushalte  in Mill. EUR"", ""A"", ""B"", ""L"", ""K"", ""Area"", ""Urban Area"")"
+"0","county_data<- county_data[ , names(county_data) %in% variables]"

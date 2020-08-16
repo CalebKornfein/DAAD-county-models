@@ -1,0 +1,4 @@
+"0",""
+"0","SNFZ_coef <- data.frame(SNFZ_mlr_coef, as.matrix(SNFZ_ridge_coef))"
+"0","colnames(SNFZ_coef) = c(""SNFZ MLR"", ""SNFZ Ridge"")"
+"0","SNFZ_coef"

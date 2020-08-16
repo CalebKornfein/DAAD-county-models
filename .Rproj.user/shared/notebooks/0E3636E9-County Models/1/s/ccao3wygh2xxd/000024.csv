@@ -1,0 +1,1 @@
+"0","plot(y=resid(KRAD_model), x = county_data$KRAD, col = ""steelblue"", ylab = ""Residual Value"", xlab = ""Literature MC Road Mileages (Vehicle km/a)"")"

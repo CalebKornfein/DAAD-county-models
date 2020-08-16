@@ -1,0 +1,1 @@
+"0","plot(PKW_in_sample_predictions$Literature, col=""black"", xlab = ""Observation Rank, by Literature Value"", ylab = ""Predicted Road Mileages in Km/a"", main=""PC In Sample Prediction"", pch = 18)"

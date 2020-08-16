@@ -1,0 +1,2 @@
+"0","KRAD_75_model <- lm(KRAD ~ ., data=KRAD_75_train)"
+"0","tidy(KRAD_75_model)"

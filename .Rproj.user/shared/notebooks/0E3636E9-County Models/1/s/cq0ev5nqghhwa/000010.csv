@@ -1,0 +1,4 @@
+"0",""
+"0","KRAD_coef <- data.frame(KRAD_mlr_coef, as.matrix(KRAD_ridge_coef))"
+"0","colnames(KRAD_coef) = c(""KRAD MLR"", ""KRAD Ridge"")"
+"0","KRAD_coef"

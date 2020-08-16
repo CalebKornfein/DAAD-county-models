@@ -1,0 +1,2 @@
+"0","par(mfrow=c(2,2))"
+"0","hist(resid(PKW_model), col = ""steelblue"", xlab = ""Residual Value"", main = ""Histogram of PKW residuals"")"

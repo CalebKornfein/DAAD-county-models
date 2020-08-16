@@ -1,0 +1,1 @@
+"0","plot(y=resid(SNFZ_model), x = county_data$SNFZ, col = ""steelblue"", ylab = ""Residual Value"", xlab = ""SNFZ Road Mileages (Vehicle km/yr)"")"

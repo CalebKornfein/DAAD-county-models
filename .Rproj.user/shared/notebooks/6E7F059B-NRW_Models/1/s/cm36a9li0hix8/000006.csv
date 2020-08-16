@@ -1,0 +1,3 @@
+"0","SNFZ_data <- county_data[ , !names(county_data) %in% c(""PKW"", ""LNFZ"", ""KRAD"")]"
+"0","SNFZ_model <- lm(SNFZ ~ ., data=SNFZ_data)"
+"0","tidy(SNFZ_model)"

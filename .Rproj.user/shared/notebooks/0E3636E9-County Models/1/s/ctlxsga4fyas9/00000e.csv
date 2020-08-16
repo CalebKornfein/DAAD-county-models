@@ -1,0 +1,1 @@
+"0","hist(log(county_data$SNFZ), xlab = ""Log SNFZ Road Mileages (Vehicle km/yr)"", main = ""Histogram of Log SNFZ Road Mileages"", col = ""steelblue2"")"

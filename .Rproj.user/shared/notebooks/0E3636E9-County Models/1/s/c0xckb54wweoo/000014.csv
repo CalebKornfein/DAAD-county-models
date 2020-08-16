@@ -1,0 +1,3 @@
+"0","# eda histograms of respons"
+"0","par(mfrow=c(2,2))"
+"0","hist(county_data$PKW, xlab = ""PKW Road Mileages (Vehicle km/yr)"", main = ""Histogram of PKW Road Mileages"", col = ""salmon"")"

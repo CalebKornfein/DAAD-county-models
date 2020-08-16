@@ -1,0 +1,2 @@
+"0","LNFZ_75_model <- lm(LNFZ ~ ., data=LNFZ_75_train)"
+"0","tidy(LNFZ_75_model)"

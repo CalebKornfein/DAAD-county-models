@@ -1,0 +1,1 @@
+"0","hist(resid(LNFZ_model), col = ""steelblue"", xlab = ""Residual Value"",  main = ""Histogram of LDV Residuals"")"

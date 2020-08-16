@@ -1,0 +1,6 @@
+"0",""
+"0","# Checking for Multicollinearity with VIF"
+"0","car::vif(PKW_model)"
+"2","Error in vif.default(PKW_model) : 
+  there are aliased coefficients in the model
+"
